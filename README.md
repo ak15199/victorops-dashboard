@@ -4,7 +4,7 @@ Installation
 -----
 After cloning the repo, you will need to:
 
-pip install -r requirements.txt
+    $ pip install -r requirements.txt
 
 Prerequisites
 -----
