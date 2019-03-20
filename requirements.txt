@@ -1,0 +1,5 @@
+flask
+pendulum
+requests
+tabulate
+uwsgi

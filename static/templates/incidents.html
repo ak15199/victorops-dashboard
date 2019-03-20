@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en" class="">
+
+<head>
+
+    <style>
+body {
+    margin: 40px;
+    font-family: Segoe UI, "Segoe UI", "DejaVu Sans", "Trebuchet MS", Verdana, sans-serif;
+}
+
+h1 {
+    margin-bottom: .3em;
+    font-weight: 200;
+    font-size: 1.7em;
+
+    color: #222;
+    clear: left;
+}
+
+div#table {
+    margin-top: 16px;
+}
+
+th {
+    text-align: left;
+    vertical-align: bottom;
+    padding-bottom: 3px;
+    border-bottom: 1px solid black;
+}
+
+td {
+    text-align: left;
+    vertical-align: top;
+}
+
+.tallies {
+    float: right;
+    clear: right;
+    font-size: 70%;
+}
+
+td.RESOLVED { color: green; }
+td.ACKED    { color: blue; }
+td.UNACKED  { color: red; font-weight: 900; }
+td.CRITICAL { color: red; font-weight: 900; }
+
+tr.resolved {
+    opacity: .7;
+    color: gray;
+}
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="//cdn.datatables.net/1.10.16/css/jquery.dataTables.css">
+    <script type="text/javascript" charset="utf8" src="//cdn.datatables.net/1.10.16/js/jquery.dataTables.js"></script>
+
+    <script type="text/javascript">
+
+    INCIDENTURL = "<a href='https://portal.victorops.com/client/gogo-llc/popoutIncident?incidentName=ID'>ID</a>"
+
+        // apply css to certain cells
+        function colorstatus(stat) {
+            $("td")
+                .filter(function(){return this.innerText==stat})
+                .addClass(stat)
+                .filter(".RESOLVED")
+                .parent()
+                    .addClass("resolved")
+        }
+
+        // turn columns into sort keys for datatables
+        function getcolumnid(text) {
+            return $("thead tr").first().children()
+                .filter(
+                    function(index) {
+                        return ($.trim($(this).text()) == $.trim(text))
+                    })
+                .map(
+                    function(index) {
+                        var i = $(this).index()
+                        return i
+                    })
+                .get(0)
+                ;
+        }
+
+        // map contents of one column to be an attribute of another
+        function fielddata(data, sort, field) {
+            var src = getcolumnid(sort)
+            var dst = getcolumnid(data)
+
+            $("tbody tr").each(
+                    function(index) {
+                        var to = $(this).find("td").eq(dst)
+                        var from = $(this).find("td").eq(src)
+                        to.attr(field, from.text())
+                    })
+        }
+
+        function format(table) {
+            colorstatus("RESOLVED")
+            colorstatus("ACKED")
+            colorstatus("UNACKED")
+            colorstatus("CRITICAL")
+
+            $("tr td:first-child").each(function() {
+                    id = $(this).text()
+                    $(this).html(INCIDENTURL.replace(/ID/g, id))
+                    console.log(id)
+                })
+        }
+
+        // when document is fully loaded...
+        $(document).ready(function() {
+            console.log("starting...")
+
+            $.fn.dataTableExt.sErrMode = 'throw';
+
+            var table = $("#incidents").DataTable( {
+                "columns": [
+                    { "data": "Incident Number" },
+                    { "data": "Alert Count" },
+                    { "data": "Current Phase" },
+                    { "data": "Entity State" },
+
+                    { "data": {
+                            _:    "Age.string",
+                            sort: "Age.value"
+                            } },
+                    { "data": {
+                            _:    "TTA.string",
+                            sort: "TTA.value"
+                            } },
+                    { "data": {
+                            _:    "TTR.string",
+                            sort: "TTR.value"
+                            } },
+
+                    { "data": "Paged Teams" },
+                    { "data": "Paged Users" },
+                    { "data": "Routing Key" },
+                    { "data": "Service" },
+                ],
+                "columnDefs": [
+                    { "width": "50%", "targets": 10 },
+                    { "width": "1%", "targets": [0, 1] },
+                    { "width": "4%", "targets": [4, 5, 6] },
+                    { "className": "dt-right", "targets": [0, 1] },
+                ],
+                "drawCallback": format,
+                "ajax": {
+                    "dataSrc": function(json) {
+                            $("#critical").text(json.critical)
+                            $("#acked").text(json.acked)
+
+                            return json.incidents
+                        }
+                }
+            } );
+
+            table.ajax.url("incidents.json").load()
+            setInterval( function () {
+                table.ajax.reload()
+            }, 30000 );
+        });
+    </script>
+</head>
+
+<body>
+    <div id="head">
+      <h1>
+      Recent Incidents Logged in VictorOps
+      <div class="tallies"><span id="critical"></span> Critical, <span id="acked"> </span> Acked</div>
+      </h1>
+    </div>
+
+    <div id="table">
+        <table id="incidents">
+            <thead><tr>
+                <th>Incident Number</th>
+                <th>Alert Count</th>
+                <th>Current Phase</th>
+                <th>Entity State</th>
+
+                <th>Age</th>
+                <th>TTA</th>
+                <th>TTR</th>
+
+                <th>Paged Teams</th>
+                <th>Paged Users</th>
+                <th>Routing Key</th>
+                <th>Service</th>
+            </tr></thead>
+            <tbody><tr><td></td></tr></tbody>
+        </table>
+    </div>
+
+</body>
