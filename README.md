@@ -24,6 +24,6 @@ Modifying for Production
 -----
 As it stands, this code is designed to be run locally and is not hardened for production use.
 
-If you would like to use this in a production environment, then there are two recomemnded changes that should be applied:
+If you would like to use this in a production environment, then there are two recommended changes that should be applied:
 * Implement a more secure means of passing in ID and key by modifying the Secrets class;
 * Use a production WSGI server such as Waitress, or uWSGI.
